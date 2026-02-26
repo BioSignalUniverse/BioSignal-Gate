@@ -2,67 +2,60 @@
 
 import asyncio
 import logging
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 from sensors.sensor_manager import SensorManager
 from core.engine import BioSignalEngine
 
-# --------------------------------------------------
-# Logging Configuration
-# --------------------------------------------------
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-
-logger = logging.getLogger("biosignal-gate")
-
-# --------------------------------------------------
-# App Setup
-# --------------------------------------------------
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
-# Initialize system
 sensor_manager = SensorManager()
-
-# Attempt device connection once at startup
 asyncio.run(sensor_manager.initialize())
 
 engine = BioSignalEngine(sensor_manager)
 
-# --------------------------------------------------
-# Routes
-# --------------------------------------------------
-
-@app.route("/health", methods=["GET"])
-def health():
-    return jsonify({
-        "status": "ok",
-        "system": "BioSignal Gate",
-        "version": "1.0.1"
-    })
-
+# Store last result globally for dashboard
+last_result = {
+    "status": "waiting",
+    "decision": "N/A",
+    "score": 0.0,
+    "sensor_status": "N/A",
+    "timestamp": "N/A"
+}
 
 @app.route("/run", methods=["POST"])
 def run_cycle():
-    try:
-        result = asyncio.run(engine.run_cycle())
-        return jsonify(result), 200
+    global last_result
 
-    except Exception as e:
-        logger.error(f"API error: {str(e)}")
-        return jsonify({
-            "status": "error",
-            "message": "Execution failed"
-        }), 500
+    result = asyncio.run(engine.run_cycle())
 
+    if result.get("status") == "success":
+        last_result = {
+            "status": "running",
+            "decision": result["decision"]["decision"],
+            "score": result["decision"]["score"],
+            "sensor_status": result["raw"]["sensor_status"],
+            "timestamp": result["timestamp"]
+        }
 
-# --------------------------------------------------
-# Start Server
-# --------------------------------------------------
+    return jsonify(result)
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template(
+        "dashboard.html",
+        status=last_result["status"],
+        decision=last_result["decision"],
+        score=last_result["score"],
+        sensor_status=last_result["sensor_status"],
+        timestamp=last_result["timestamp"]
+    )
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
-    logger.info("Starting BioSignal Gate API...")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000)
