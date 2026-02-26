@@ -1,1 +1,16 @@
 
+{
+  "thresholds": {
+    "hrv_log": 3.8,
+    "normalized_hrv": 0.55,
+    "variability_index": 0.5,
+    "resp_sync": 0.6
+  },
+  "weights": {
+    "hrv_log": 0.30,
+    "normalized_hrv": 0.30,
+    "variability_index": 0.20,
+    "resp_sync": 0.20
+  },
+  "decision_threshold": 0.7
+}
