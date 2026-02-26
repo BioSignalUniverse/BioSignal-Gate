@@ -1,95 +1,77 @@
-# BioSignal-Gate
+# BioSignal Gate
 
-
-BioSignal Gate is a modular, device-agnostic physiological signal processing and decision framework.
+BioSignal Gate is a modular, device-agnostic bio-signal processing and decision framework.
 
 It is designed around a clean architecture:
 
 Measure → Process → Decide → Execute
 
-The system runs in simulation mode by default and can integrate real wearable devices through optional sensor adapters.
-
----
-
-## Architecture
-
-```
-splendids/
-│
-├── core/
-│   ├── engine.py
-│   ├── bio_signal_gate.py
-│   ├── signal_processor.py
-│   └── executor.py
-│
-├── sensors/
-│   ├── base_sensor.py
-│   ├── simulation_sensor.py
-│   └── sensor_manager.py
-│
-├── config/
-│   └── thresholds.json
-│
-├── main.py
-├── requirements.txt
-└── LICENSE
-```
-
-The core system is completely independent of hardware.
-
----
-
-## Features
-
-- Device-agnostic design
+The system supports:
+- Real wearable integration (e.g., Polar H10)
+- Simulation mode (no hardware required)
 - Config-driven thresholds
-- Modular sensor layer
-- Simulation-first architecture
-- Clean separation of concerns
+- Weighted decision logic
+- Structured API access
+- Optional dashboard interface
+
+---
+
+## 🔹 Architecture
+
+- `core/` → Decision logic, engine, and execution layer
+- `sensors/` → Device adapters (Polar, simulation, future wearables)
+- `config/` → Thresholds and system parameters
+- `api.py` → Flask interface
+- `templates/` → Dashboard interface
+
+The engine is hardware-independent.
+Sensors are pluggable.
+Logic is fully config-driven.
+
+---
+
+## 🔹 Features
+
+- Real-time HRV processing (RMSSD)
+- Automatic device fallback to simulation
+- Decision scoring system
+- Logging support
+- Health endpoint
+- Optional dashboard view
 - MIT licensed
-- Ready for wearable integration
 
 ---
 
-## Current Status
-
-Version 1.0  
-Simulation-ready  
-Hardware adapters can be added without modifying core logic.
-
----
-
-## Philosophy
-
-This project prioritizes:
-
-- Structural clarity
-- Deterministic logic
-- Transparency
-- Reproducibility
-
-No claims about consciousness, intelligence, or medical diagnosis.
-
-It is an engineering framework.
-
----
-
-## Installation
+## 🔹 Run Locally
 
 ```bash
 pip install -r requirements.txt
+python api.py
+```
+
+Open:
+
+```
+http://localhost:5000/dashboard
 ```
 
 ---
 
-## Run
+## 🔹 Philosophy
 
-```bash
-python main.py
-```
+BioSignal Gate is built for:
+
+- Open research
+- Responsible signal interpretation
+- Extensible system design
+- Future wearable integration
+- Transparent decision logic
+
+It is not medical software.
+It is a modular bio-signal framework.
 
 ---
 
-## License
+## 🔹 License
 
 MIT License
