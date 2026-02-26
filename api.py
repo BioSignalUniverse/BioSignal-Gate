@@ -1,39 +1,75 @@
 # api.py
 
-from flask import Flask, request, jsonify
+import logging
 import asyncio
+from flask import Flask, request, jsonify
 
 from sensors.sensor_manager import SensorManager
 from core.engine import BioSignalEngine
 
+# --------------------------------------------------
+# Logging Setup
+# --------------------------------------------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+
+logger = logging.getLogger("biosignal-gate")
+
+# --------------------------------------------------
+# App Initialization
+# --------------------------------------------------
+
 app = Flask(__name__)
 
-# Initialize system once
 sensor_manager = SensorManager()
 engine = BioSignalEngine(sensor_manager)
 
 
-@app.route("/status", methods=["GET"])
-def status():
+# --------------------------------------------------
+# Health Check
+# --------------------------------------------------
+
+@app.route("/health", methods=["GET"])
+def health():
     return jsonify({
+        "status": "ok",
         "system": "BioSignal Gate",
-        "status": "running",
-        "version": "1.0.0"
+        "version": "1.0.1"
     })
 
 
+# --------------------------------------------------
+# Run One Cycle
+# --------------------------------------------------
+
 @app.route("/run", methods=["POST"])
 def run_cycle():
-    """
-    Runs one Measure → Process → Decide → Execute cycle.
-    Optional: can accept external raw data in future.
-    """
+    try:
+        logger.info("Cycle requested")
 
-    result = asyncio.run(engine.run_cycle())
+        result = asyncio.run(engine.run_cycle())
 
-    return jsonify(result)
+        return jsonify({
+            "status": "success",
+            "result": result
+        }), 200
 
+    except Exception as e:
+        logger.error(f"Cycle failed: {str(e)}")
+
+        return jsonify({
+            "status": "error",
+            "message": "Execution failed"
+        }), 500
+
+
+# --------------------------------------------------
+# Start Server
+# --------------------------------------------------
 
 if __name__ == "__main__":
-    print("BioSignal Gate API starting...")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    logger.info("Starting BioSignal Gate API...")
+    app.run(host="0.0.0.0", port=5000, debug=False)
