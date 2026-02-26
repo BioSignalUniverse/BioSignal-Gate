@@ -1,7 +1,7 @@
-
 # sensors/sensor_manager.py
 
 from sensors.simulation_sensor import SimulationSensor
+from sensors.polar_sensor import PolarH10Sensor
 
 
 class SensorManager:
@@ -11,10 +11,12 @@ class SensorManager:
 
     async def initialize(self):
         """
-        Later we can attempt real device connection here.
-        For now, simulation is the default.
+        Try to connect to Polar.
+        If it fails, stay in simulation mode.
         """
-        pass
 
-    async def measure(self):
-        return await self.sensor.measure()
+        polar = PolarH10Sensor()
+        connected = await polar.discover_and_connect()
+
+        if connected:
+            self.sensor = polar
