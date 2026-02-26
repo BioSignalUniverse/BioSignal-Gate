@@ -1,8 +1,6 @@
-  
 # core/engine.py
 
-import asyncio
-from datetime import datetime
+import logging
 
 from core.signal_processor import SignalProcessor
 from core.bio_signal_gate import BioSignalGate
@@ -10,35 +8,43 @@ from core.executor import ActionExecutor
 
 
 class BioSignalEngine:
+
     def __init__(self, sensor):
-        """
-        sensor: injected sensor (simulation or real)
-        """
         self.sensor = sensor
         self.processor = SignalProcessor()
         self.gate = BioSignalGate()
         self.executor = ActionExecutor()
 
+        self.logger = logging.getLogger("biosignal-gate.engine")
+
     async def run_cycle(self):
-        """
-        One full system cycle:
-        Measure → Process → Decide → Execute
-        """
 
-        raw = await self.sensor.measure()
+        try:
+            raw = await self.sensor.measure()
 
-        features = self.processor.calculate_features(raw)
+            features = self.processor.calculate_features(raw)
 
-        decision = self.gate.evaluate(features)
+            decision = self.gate.evaluate(features)
 
-        if decision["decision"] == "PROCEED":
             await self.executor.execute("log_data", {
-                "timestamp": datetime.now().isoformat(),
                 "raw": raw,
                 "features": features,
                 "decision": decision
             })
-        else:
-            await self.executor.execute("wait", {"duration": 1})
 
-        return decision
+            self.logger.info(f"Cycle completed: {decision['decision']}")
+
+            return {
+                "status": "success",
+                "raw": raw,
+                "features": features,
+                "decision": decision
+            }
+
+        except Exception as e:
+            self.logger.error(f"Engine error: {str(e)}")
+
+            return {
+                "status": "error",
+                "message": "Engine execution failed"
+            }
