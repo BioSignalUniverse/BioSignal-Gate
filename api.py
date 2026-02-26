@@ -2,35 +2,22 @@
 
 import logging
 import asyncio
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 
 from sensors.sensor_manager import SensorManager
 from core.engine import BioSignalEngine
 
-# --------------------------------------------------
-# Logging Setup
-# --------------------------------------------------
-
+# Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
-
-logger = logging.getLogger("biosignal-gate")
-
-# --------------------------------------------------
-# App Initialization
-# --------------------------------------------------
 
 app = Flask(__name__)
 
 sensor_manager = SensorManager()
 engine = BioSignalEngine(sensor_manager)
 
-
-# --------------------------------------------------
-# Health Check
-# --------------------------------------------------
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -41,24 +28,15 @@ def health():
     })
 
 
-# --------------------------------------------------
-# Run One Cycle
-# --------------------------------------------------
-
 @app.route("/run", methods=["POST"])
 def run_cycle():
     try:
-        logger.info("Cycle requested")
-
         result = asyncio.run(engine.run_cycle())
 
-        return jsonify({
-            "status": "success",
-            "result": result
-        }), 200
+        return jsonify(result), 200
 
     except Exception as e:
-        logger.error(f"Cycle failed: {str(e)}")
+        logging.error(f"API failure: {str(e)}")
 
         return jsonify({
             "status": "error",
@@ -66,10 +44,6 @@ def run_cycle():
         }), 500
 
 
-# --------------------------------------------------
-# Start Server
-# --------------------------------------------------
-
 if __name__ == "__main__":
-    logger.info("Starting BioSignal Gate API...")
+    logging.info("Starting BioSignal Gate API...")
     app.run(host="0.0.0.0", port=5000, debug=False)
